@@ -53,7 +53,7 @@ type baseIterator[T any] struct {
 	iterableWrapper[T]
 }
 
-func fromIterable[T any](data gust.Iterable[T]) Iterator[T] {
+func fromIterable[T any](data gust.Iterable[T]) innerIterator[T] {
 	iter := &baseIterator[T]{iterableWrapper: wrapIterable[T](data)}
 	iter.setFacade(iter)
 	return iter
@@ -64,7 +64,7 @@ type baseDeIterator[T any] struct {
 	iterableWrapper[T]
 }
 
-func fromDeIterable[T any](data gust.DeIterable[T]) DeIterator[T] {
+func fromDeIterable[T any](data gust.DeIterable[T]) innerDeIterator[T] {
 	iter := &baseDeIterator[T]{iterableWrapper: wrapIterable[T](data)}
 	iter.setFacade(iter)
 	return iter

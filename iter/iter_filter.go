@@ -5,15 +5,15 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*filterIterator[any])(nil)
-	_ iRealNext[any]    = (*filterIterator[any])(nil)
-	_ iRealSizeHint     = (*filterIterator[any])(nil)
-	_ iRealCount        = (*filterIterator[any])(nil)
-	_ iRealTryFold[any] = (*filterIterator[any])(nil)
-	_ iRealFold[any]    = (*filterIterator[any])(nil)
+	_ innerIterator[any] = (*filterIterator[any])(nil)
+	_ iRealNext[any]     = (*filterIterator[any])(nil)
+	_ iRealSizeHint      = (*filterIterator[any])(nil)
+	_ iRealCount         = (*filterIterator[any])(nil)
+	_ iRealTryFold[any]  = (*filterIterator[any])(nil)
+	_ iRealFold[any]     = (*filterIterator[any])(nil)
 )
 
-func newFilterIterator[T any](iter Iterator[T], predicate func(T) bool) Iterator[T] {
+func newFilterIterator[T any](iter innerIterator[T], predicate func(T) bool) innerIterator[T] {
 	p := &filterIterator[T]{iter: iter, predicate: predicate}
 	p.setFacade(p)
 	return p
@@ -21,7 +21,7 @@ func newFilterIterator[T any](iter Iterator[T], predicate func(T) bool) Iterator
 
 type filterIterator[T any] struct {
 	deIterBackground[T]
-	iter      Iterator[T]
+	iter      innerIterator[T]
 	predicate func(T) bool
 }
 
@@ -34,7 +34,7 @@ func (f *filterIterator[T]) realNext() gust.Option[T] {
 }
 
 func (f *filterIterator[T]) realCount() uint {
-	return Fold[uint, uint](Map[T, uint](f.iter, func(x T) uint {
+	return Fold[uint, uint](newMapIterator[T, uint](f.iter, func(x T) uint {
 		if f.predicate(x) {
 			return 1
 		}
@@ -68,14 +68,14 @@ func (f *filterIterator[T]) realFold(init any, fold func(any, T) any) any {
 }
 
 var (
-	_ DeIterator[any]    = (*deFilterIterator[any])(nil)
-	_ iRealRemaining     = (*deFilterIterator[any])(nil)
-	_ iRealNextBack[any] = (*deFilterIterator[any])(nil)
-	_ iRealTryRfold[any] = (*deFilterIterator[any])(nil)
-	_ iRealRfold[any]    = (*deFilterIterator[any])(nil)
+	_ innerDeIterator[any] = (*deFilterIterator[any])(nil)
+	_ iRealRemaining       = (*deFilterIterator[any])(nil)
+	_ iRealNextBack[any]   = (*deFilterIterator[any])(nil)
+	_ iRealTryRfold[any]   = (*deFilterIterator[any])(nil)
+	_ iRealRfold[any]      = (*deFilterIterator[any])(nil)
 )
 
-func newDeFilterIterator[T any](iter DeIterator[T], predicate func(T) bool) DeIterator[T] {
+func newDeFilterIterator[T any](iter innerDeIterator[T], predicate func(T) bool) innerDeIterator[T] {
 	p := &deFilterIterator[T]{filterIterator: filterIterator[T]{iter: iter, predicate: predicate}}
 	p.setFacade(p)
 	return p
@@ -86,15 +86,15 @@ type deFilterIterator[T any] struct {
 }
 
 func (d *deFilterIterator[T]) realRemaining() uint {
-	return d.iter.(DeIterator[T]).Remaining()
+	return d.iter.(innerDeIterator[T]).Remaining()
 }
 
 func (d *deFilterIterator[T]) realNextBack() gust.Option[T] {
-	return d.iter.(DeIterator[T]).Rfind(d.predicate)
+	return d.iter.(innerDeIterator[T]).Rfind(d.predicate)
 }
 
 func (d *deFilterIterator[T]) realTryRfold(init any, fold func(any, T) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
-	return d.iter.(DeIterator[T]).TryRfold(init, func(acc any, item T) gust.AnyCtrlFlow {
+	return d.iter.(innerDeIterator[T]).TryRfold(init, func(acc any, item T) gust.AnyCtrlFlow {
 		if d.predicate(item) {
 			return fold(acc, item)
 		}
@@ -103,7 +103,7 @@ func (d *deFilterIterator[T]) realTryRfold(init any, fold func(any, T) gust.AnyC
 }
 
 func (d *deFilterIterator[T]) realRfold(init any, fold func(any, T) any) any {
-	return d.iter.(DeIterator[T]).Rfold(init, func(acc any, item T) any {
+	return d.iter.(innerDeIterator[T]).Rfold(init, func(acc any, item T) any {
 		if d.predicate(item) {
 			return fold(acc, item)
 		}

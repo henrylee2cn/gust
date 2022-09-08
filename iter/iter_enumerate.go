@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	_ Iterator[KV[any]]       = (*enumerateIterator[any])(nil)
+	_ innerIterator[KV[any]]  = (*enumerateIterator[any])(nil)
 	_ iRealNext[KV[any]]      = (*enumerateIterator[any])(nil)
 	_ iRealSizeHint           = (*enumerateIterator[any])(nil)
 	_ iRealNth[KV[any]]       = (*enumerateIterator[any])(nil)
@@ -15,7 +15,7 @@ var (
 	_ iRealAdvanceBy[KV[any]] = (*enumerateIterator[any])(nil)
 )
 
-func newEnumerateIterator[T any](iter Iterator[T]) Iterator[KV[T]] {
+func newEnumerateIterator[T any](iter innerIterator[T]) innerIterator[KV[T]] {
 	p := &enumerateIterator[T]{iter: iter}
 	p.setFacade(p)
 	return p
@@ -25,7 +25,7 @@ type (
 	// enumerateIterator is an iterator that yields the current count and the element during iteration.
 	enumerateIterator[T any] struct {
 		deIterBackground[KV[T]]
-		iter  Iterator[T]
+		iter  innerIterator[T]
 		count uint
 	}
 	// KV is an index-value pair.
@@ -94,7 +94,7 @@ func (f *enumerateIterator[T]) realAdvanceBy(n uint) gust.Errable[uint] {
 }
 
 var (
-	_ DeIterator[KV[any]]         = (*deEnumerateIterator[any])(nil)
+	_ innerDeIterator[KV[any]]    = (*deEnumerateIterator[any])(nil)
 	_ iRealNext[KV[any]]          = (*deEnumerateIterator[any])(nil)
 	_ iRealSizeHint               = (*deEnumerateIterator[any])(nil)
 	_ iRealNth[KV[any]]           = (*deEnumerateIterator[any])(nil)
@@ -110,7 +110,7 @@ var (
 	_ iRealRemaining              = (*deEnumerateIterator[any])(nil)
 )
 
-func newDeEnumerateIterator[T any](iter DeIterator[T]) DeIterator[KV[T]] {
+func newDeEnumerateIterator[T any](iter innerDeIterator[T]) innerDeIterator[KV[T]] {
 	p := &deEnumerateIterator[T]{}
 	p.iter = iter
 	p.setFacade(p)
@@ -123,7 +123,7 @@ type deEnumerateIterator[T any] struct {
 }
 
 func (d *deEnumerateIterator[T]) realNextBack() gust.Option[KV[T]] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var a = sizeDeIter.NextBack()
 	if a.IsNone() {
 		return gust.None[KV[T]]()
@@ -132,7 +132,7 @@ func (d *deEnumerateIterator[T]) realNextBack() gust.Option[KV[T]] {
 }
 
 func (d *deEnumerateIterator[T]) realNthBack(n uint) gust.Option[KV[T]] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var a = sizeDeIter.NthBack(n)
 	if a.IsNone() {
 		return gust.None[KV[T]]()
@@ -141,7 +141,7 @@ func (d *deEnumerateIterator[T]) realNthBack(n uint) gust.Option[KV[T]] {
 }
 
 func (d *deEnumerateIterator[T]) realTryRfold(init any, fold func(any, KV[T]) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var count = d.count + sizeDeIter.Remaining()
 	return sizeDeIter.TryRfold(init, func(acc any, item T) gust.AnyCtrlFlow {
 		count -= 1
@@ -150,7 +150,7 @@ func (d *deEnumerateIterator[T]) realTryRfold(init any, fold func(any, KV[T]) gu
 }
 
 func (d *deEnumerateIterator[T]) realRfold(acc any, fold func(any, KV[T]) any) any {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var count = d.count + sizeDeIter.Remaining()
 	return sizeDeIter.Rfold(acc, func(acc any, item T) any {
 		count -= 1
@@ -159,9 +159,9 @@ func (d *deEnumerateIterator[T]) realRfold(acc any, fold func(any, KV[T]) any) a
 }
 
 func (d *deEnumerateIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
-	return d.iter.(DeIterator[T]).AdvanceBackBy(n)
+	return d.iter.(innerDeIterator[T]).AdvanceBackBy(n)
 }
 
 func (d *deEnumerateIterator[T]) realRemaining() uint {
-	return d.iter.(DeIterator[T]).Remaining()
+	return d.iter.(innerDeIterator[T]).Remaining()
 }

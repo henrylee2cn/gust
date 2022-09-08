@@ -5,13 +5,13 @@ import (
 )
 
 var (
-	_ Iterator[gust.Pair[any, any]]  = (*zipIterator[any, any])(nil)
-	_ iRealNext[gust.Pair[any, any]] = (*zipIterator[any, any])(nil)
-	_ iRealSizeHint                  = (*zipIterator[any, any])(nil)
-	_ iRealNth[gust.Pair[any, any]]  = (*zipIterator[any, any])(nil)
+	_ innerIterator[gust.Pair[any, any]] = (*zipIterator[any, any])(nil)
+	_ iRealNext[gust.Pair[any, any]]     = (*zipIterator[any, any])(nil)
+	_ iRealSizeHint                      = (*zipIterator[any, any])(nil)
+	_ iRealNth[gust.Pair[any, any]]      = (*zipIterator[any, any])(nil)
 )
 
-func newZipIterator[A any, B any](a Iterator[A], b Iterator[B]) Iterator[gust.Pair[A, B]] {
+func newZipIterator[A any, B any](a innerIterator[A], b innerIterator[B]) innerIterator[gust.Pair[A, B]] {
 	p := &zipIterator[A, B]{a: a, b: b}
 	p.setFacade(p)
 	return p
@@ -20,8 +20,8 @@ func newZipIterator[A any, B any](a Iterator[A], b Iterator[B]) Iterator[gust.Pa
 type (
 	zipIterator[A any, B any] struct {
 		iterBackground[gust.Pair[A, B]]
-		a Iterator[A]
-		b Iterator[B]
+		a innerIterator[A]
+		b innerIterator[B]
 	}
 )
 
@@ -79,13 +79,13 @@ func (s *zipIterator[A, B]) realNth(n uint) gust.Option[gust.Pair[A, B]] {
 }
 
 var (
-	_ DeIterator[gust.Pair[any, any]]      = (*deZipIterator[any, any])(nil)
+	_ innerDeIterator[gust.Pair[any, any]] = (*deZipIterator[any, any])(nil)
 	_ iRealSizeHint                        = (*deZipIterator[any, any])(nil)
 	_ iRealNth[gust.Pair[any, any]]        = (*deZipIterator[any, any])(nil)
 	_ iRealDeIterable[gust.Pair[any, any]] = (*deZipIterator[any, any])(nil)
 )
 
-func newDeZipIterator[A any, B any](a DeIterator[A], b DeIterator[B]) DeIterator[gust.Pair[A, B]] {
+func newDeZipIterator[A any, B any](a innerDeIterator[A], b innerDeIterator[B]) innerDeIterator[gust.Pair[A, B]] {
 	p := &deZipIterator[A, B]{a: a, b: b}
 	p.setFacade(p)
 	return p
@@ -94,8 +94,8 @@ func newDeZipIterator[A any, B any](a DeIterator[A], b DeIterator[B]) DeIterator
 // deZipIterator is a double-ended 2-in-1 iterator with explicit size
 type deZipIterator[A any, B any] struct {
 	deIterBackground[gust.Pair[A, B]]
-	a DeIterator[A]
-	b DeIterator[B]
+	a innerDeIterator[A]
+	b innerDeIterator[B]
 }
 
 func (s *deZipIterator[A, B]) realRemaining() uint {

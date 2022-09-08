@@ -18,7 +18,7 @@ var (
 	_ iRealRemaining     = (*implPeekable[any])(nil)
 )
 
-func newPeekableIterator[T any](iter Iterator[T]) PeekableIterator[T] {
+func newPeekableIterator[T any](iter innerIterator[T]) PeekableIterator[T] {
 	p := &peekableIterator[T]{
 		implPeekable: implPeekable[T]{iter: iter},
 	}
@@ -31,15 +31,15 @@ type peekableIterator[T any] struct {
 	implPeekable[T]
 }
 
-func (s *peekableIterator[T]) Intersperse(separator T) Iterator[T] {
+func (s *peekableIterator[T]) Intersperse(separator T) innerIterator[T] {
 	return newIntersperseIterator[T](s, separator)
 }
 
-func (s *peekableIterator[T]) IntersperseWith(separator func() T) Iterator[T] {
+func (s *peekableIterator[T]) IntersperseWith(separator func() T) innerIterator[T] {
 	return newIntersperseWithIterator[T](s, separator)
 }
 
-func newDePeekableIterator[T any](iter DeIterator[T]) DePeekableIterator[T] {
+func newDePeekableIterator[T any](iter innerDeIterator[T]) DePeekableIterator[T] {
 	p := &dePeekableIterator[T]{
 		implPeekable: implPeekable[T]{iter: iter},
 	}
@@ -52,16 +52,16 @@ type dePeekableIterator[T any] struct {
 	implPeekable[T]
 }
 
-func (s *dePeekableIterator[T]) Intersperse(separator T) Iterator[T] {
+func (s *dePeekableIterator[T]) Intersperse(separator T) innerIterator[T] {
 	return newIntersperseIterator[T](s, separator)
 }
 
-func (s *dePeekableIterator[T]) IntersperseWith(separator func() T) Iterator[T] {
+func (s *dePeekableIterator[T]) IntersperseWith(separator func() T) innerIterator[T] {
 	return newIntersperseWithIterator[T](s, separator)
 }
 
 type implPeekable[T any] struct {
-	iter Iterator[T]
+	iter innerIterator[T]
 	// Remember a peeked value, even if it was None.
 	peeked gust.Option[gust.Option[T]]
 }
@@ -193,14 +193,14 @@ func (s *implPeekable[T]) realTryFold(init any, f func(any, T) gust.AnyCtrlFlow)
 func (s *implPeekable[T]) realTryRfold(init any, fold func(any, T) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
 	var taken = s.peeked.Take()
 	if taken.IsNone() {
-		return TryRfold[T, any](s.iter.(DeIterator[T]), init, fold)
+		return TryRfold[T, any](s.iter.(innerDeIterator[T]), init, fold)
 	}
 	peeked := taken.Unwrap()
 	if peeked.IsNone() {
 		return gust.AnyContinue(init)
 	}
 	v := peeked.Unwrap()
-	r := TryRfold[T, any](s.iter.(DeIterator[T]), init, fold)
+	r := TryRfold[T, any](s.iter.(innerDeIterator[T]), init, fold)
 	if r.IsContinue() {
 		return fold(r.UnwrapContinue(), v)
 	}
@@ -224,13 +224,13 @@ func (s *implPeekable[T]) realFold(init any, f func(any, T) any) any {
 func (s *implPeekable[T]) realRfold(init any, fold func(any, T) any) any {
 	var taken = s.peeked.Take()
 	if taken.IsNone() {
-		return Rfold[T, any](s.iter.(DeIterator[T]), init, fold)
+		return Rfold[T, any](s.iter.(innerDeIterator[T]), init, fold)
 	}
 	peeked := taken.Unwrap()
 	if peeked.IsNone() {
 		return init
 	}
 	v := peeked.Unwrap()
-	acc := Rfold[T, any](s.iter.(DeIterator[T]), init, fold)
+	acc := Rfold[T, any](s.iter.(innerDeIterator[T]), init, fold)
 	return fold(acc, v)
 }

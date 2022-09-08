@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	_ Iterator[any]       = (*chainIterator[any])(nil)
+	_ innerIterator[any]  = (*chainIterator[any])(nil)
 	_ iRealNext[any]      = (*chainIterator[any])(nil)
 	_ iRealCount          = (*chainIterator[any])(nil)
 	_ iRealTryFold[any]   = (*chainIterator[any])(nil)
@@ -17,7 +17,7 @@ var (
 	_ iRealSizeHint       = (*chainIterator[any])(nil)
 )
 
-func newChainIterator[T any](a Iterator[T], b Iterator[T]) Iterator[T] {
+func newChainIterator[T any](a innerIterator[T], b innerIterator[T]) innerIterator[T] {
 	iter := &chainIterator[T]{a: a, b: b}
 	iter.setFacade(iter)
 	return iter
@@ -25,8 +25,8 @@ func newChainIterator[T any](a Iterator[T], b Iterator[T]) Iterator[T] {
 
 type chainIterator[T any] struct {
 	deIterBackground[T]
-	a Iterator[T]
-	b Iterator[T]
+	a innerIterator[T]
+	b innerIterator[T]
 }
 
 func (s *chainIterator[T]) realNextBack() gust.Option[T] {
@@ -184,7 +184,7 @@ func (s *chainIterator[T]) realCount() uint {
 }
 
 var (
-	_ DeIterator[any]         = (*deChainIterator[any])(nil)
+	_ innerDeIterator[any]    = (*deChainIterator[any])(nil)
 	_ iRealRemaining          = (*deChainIterator[any])(nil)
 	_ iRealNextBack[any]      = (*deChainIterator[any])(nil)
 	_ iRealAdvanceBackBy[any] = (*deChainIterator[any])(nil)
@@ -194,7 +194,7 @@ var (
 	_ iRealRfold[any]         = (*deChainIterator[any])(nil)
 )
 
-func newDeChainIterator[T any](a DeIterator[T], b DeIterator[T]) DeIterator[T] {
+func newDeChainIterator[T any](a innerDeIterator[T], b innerDeIterator[T]) innerDeIterator[T] {
 	iter := &deChainIterator[T]{chainIterator: chainIterator[T]{a: a, b: b}}
 	iter.setFacade(iter)
 	return iter
@@ -205,10 +205,10 @@ type deChainIterator[T any] struct {
 }
 
 func (d *deChainIterator[T]) realRemaining() uint {
-	return d.a.(DeIterator[T]).Remaining() + d.b.(DeIterator[T]).Remaining()
+	return d.a.(innerDeIterator[T]).Remaining() + d.b.(innerDeIterator[T]).Remaining()
 }
 
-func andThenOrClear[T any, U any](opt *Iterator[T], f func(Iterator[T]) gust.Option[U]) gust.Option[U] {
+func andThenOrClear[T any, U any](opt *innerIterator[T], f func(innerIterator[T]) gust.Option[U]) gust.Option[U] {
 	if *opt == nil {
 		return gust.None[U]()
 	}
@@ -220,20 +220,20 @@ func andThenOrClear[T any, U any](opt *Iterator[T], f func(Iterator[T]) gust.Opt
 }
 
 func (d *deChainIterator[T]) realNextBack() gust.Option[T] {
-	return andThenOrClear[T, T](&d.b, func(iter Iterator[T]) gust.Option[T] {
-		return iter.(DeIterator[T]).NextBack()
+	return andThenOrClear[T, T](&d.b, func(iter innerIterator[T]) gust.Option[T] {
+		return iter.(innerDeIterator[T]).NextBack()
 	}).OrElse(func() gust.Option[T] {
 		if d.a == nil {
 			return gust.None[T]()
 		}
-		return d.a.(DeIterator[T]).NextBack()
+		return d.a.(innerDeIterator[T]).NextBack()
 	})
 }
 
 func (d *deChainIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
 	var rem = n
 	if d.b != nil {
-		var r = d.b.(DeIterator[T]).AdvanceBackBy(rem)
+		var r = d.b.(innerDeIterator[T]).AdvanceBackBy(rem)
 		if r.IsOk() {
 			return gust.NonErrable[uint]()
 		}
@@ -241,7 +241,7 @@ func (d *deChainIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
 		d.b = nil
 	}
 	if d.a != nil {
-		var r = d.a.(DeIterator[T]).AdvanceBackBy(rem)
+		var r = d.a.(innerDeIterator[T]).AdvanceBackBy(rem)
 		if r.IsOk() {
 			return gust.NonErrable[uint]()
 		}
@@ -256,7 +256,7 @@ func (d *deChainIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
 
 func (d *deChainIterator[T]) realNthBack(n uint) gust.Option[T] {
 	if d.b != nil {
-		var b = d.b.(DeIterator[T])
+		var b = d.b.(innerDeIterator[T])
 		var r = b.AdvanceBackBy(n)
 		if r.IsOk() {
 			x := b.NextBack()
@@ -270,25 +270,25 @@ func (d *deChainIterator[T]) realNthBack(n uint) gust.Option[T] {
 		d.b = nil
 	}
 	if d.a != nil {
-		return d.a.(DeIterator[T]).NthBack(n)
+		return d.a.(innerDeIterator[T]).NthBack(n)
 	}
 	return gust.None[T]()
 }
 
 func (d *deChainIterator[T]) realRfind(f func(T) bool) gust.Option[T] {
-	return andThenOrClear[T, T](&d.b, func(iter Iterator[T]) gust.Option[T] {
-		return iter.(DeIterator[T]).Rfind(f)
+	return andThenOrClear[T, T](&d.b, func(iter innerIterator[T]) gust.Option[T] {
+		return iter.(innerDeIterator[T]).Rfind(f)
 	}).OrElse(func() gust.Option[T] {
 		if d.a == nil {
 			return gust.None[T]()
 		}
-		return d.a.(DeIterator[T]).Rfind(f)
+		return d.a.(innerDeIterator[T]).Rfind(f)
 	})
 }
 
 func (d *deChainIterator[T]) realTryRfold(acc any, f func(any, T) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
 	if d.b != nil {
-		b := d.b.(DeIterator[T])
+		b := d.b.(innerDeIterator[T])
 		r := b.TryRfold(acc, f)
 		if r.IsBreak() {
 			return r
@@ -297,7 +297,7 @@ func (d *deChainIterator[T]) realTryRfold(acc any, f func(any, T) gust.AnyCtrlFl
 		d.b = nil
 	}
 	if d.a != nil {
-		a := d.a.(DeIterator[T])
+		a := d.a.(innerDeIterator[T])
 		r := a.TryRfold(acc, f)
 		if r.IsBreak() {
 			return r
@@ -310,11 +310,11 @@ func (d *deChainIterator[T]) realTryRfold(acc any, f func(any, T) gust.AnyCtrlFl
 
 func (d *deChainIterator[T]) realRfold(acc any, f func(any, T) any) any {
 	if d.b != nil {
-		b := d.b.(DeIterator[T])
+		b := d.b.(innerDeIterator[T])
 		acc = b.Rfold(acc, f)
 	}
 	if d.a != nil {
-		a := d.a.(DeIterator[T])
+		a := d.a.(innerDeIterator[T])
 		acc = a.Rfold(acc, f)
 	}
 	return acc

@@ -8,15 +8,15 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*stepByIterator[any])(nil)
-	_ iRealNext[any]    = (*stepByIterator[any])(nil)
-	_ iRealSizeHint     = (*stepByIterator[any])(nil)
-	_ iRealNth[any]     = (*stepByIterator[any])(nil)
-	_ iRealTryFold[any] = (*stepByIterator[any])(nil)
-	_ iRealFold[any]    = (*stepByIterator[any])(nil)
+	_ innerIterator[any] = (*stepByIterator[any])(nil)
+	_ iRealNext[any]     = (*stepByIterator[any])(nil)
+	_ iRealSizeHint      = (*stepByIterator[any])(nil)
+	_ iRealNth[any]      = (*stepByIterator[any])(nil)
+	_ iRealTryFold[any]  = (*stepByIterator[any])(nil)
+	_ iRealFold[any]     = (*stepByIterator[any])(nil)
 )
 
-func newStepByIterator[T any](iter Iterator[T], step uint) Iterator[T] {
+func newStepByIterator[T any](iter innerIterator[T], step uint) innerIterator[T] {
 	if step == 0 {
 		panic("step must be non-zero")
 	}
@@ -27,7 +27,7 @@ func newStepByIterator[T any](iter Iterator[T], step uint) Iterator[T] {
 
 type stepByIterator[T any] struct {
 	iterBackground[T]
-	iter      Iterator[T]
+	iter      innerIterator[T]
 	step      uint
 	firstTake bool
 }

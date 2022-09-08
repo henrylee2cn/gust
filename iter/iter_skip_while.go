@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*skipWhileIterator[any])(nil)
-	_ iRealNext[any]    = (*skipWhileIterator[any])(nil)
-	_ iRealFold[any]    = (*skipWhileIterator[any])(nil)
-	_ iRealTryFold[any] = (*skipWhileIterator[any])(nil)
-	_ iRealSizeHint     = (*skipWhileIterator[any])(nil)
+	_ innerIterator[any] = (*skipWhileIterator[any])(nil)
+	_ iRealNext[any]     = (*skipWhileIterator[any])(nil)
+	_ iRealFold[any]     = (*skipWhileIterator[any])(nil)
+	_ iRealTryFold[any]  = (*skipWhileIterator[any])(nil)
+	_ iRealSizeHint      = (*skipWhileIterator[any])(nil)
 )
 
-func newSkipWhileIterator[T any](iter Iterator[T], predicate func(T) bool) Iterator[T] {
+func newSkipWhileIterator[T any](iter innerIterator[T], predicate func(T) bool) innerIterator[T] {
 	p := &skipWhileIterator[T]{iter: iter, predicate: predicate}
 	p.setFacade(p)
 	return p
@@ -20,7 +20,7 @@ func newSkipWhileIterator[T any](iter Iterator[T], predicate func(T) bool) Itera
 
 type skipWhileIterator[T any] struct {
 	iterBackground[T]
-	iter      Iterator[T]
+	iter      innerIterator[T]
 	flag      bool
 	predicate func(T) bool
 }

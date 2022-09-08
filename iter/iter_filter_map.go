@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*filterMapIterator[any, any])(nil)
-	_ iRealNext[any]    = (*filterMapIterator[any, any])(nil)
-	_ iRealSizeHint     = (*filterMapIterator[any, any])(nil)
-	_ iRealTryFold[any] = (*filterMapIterator[any, any])(nil)
-	_ iRealFold[any]    = (*filterMapIterator[any, any])(nil)
+	_ innerIterator[any] = (*filterMapIterator[any, any])(nil)
+	_ iRealNext[any]     = (*filterMapIterator[any, any])(nil)
+	_ iRealSizeHint      = (*filterMapIterator[any, any])(nil)
+	_ iRealTryFold[any]  = (*filterMapIterator[any, any])(nil)
+	_ iRealFold[any]     = (*filterMapIterator[any, any])(nil)
 )
 
-func newFilterMapIterator[T any, B any](iter Iterator[T], filterMap func(T) gust.Option[B]) Iterator[B] {
+func newFilterMapIterator[T any, B any](iter innerIterator[T], filterMap func(T) gust.Option[B]) innerIterator[B] {
 	p := &filterMapIterator[T, B]{iter: iter, f: filterMap}
 	p.setFacade(p)
 	return p
@@ -21,7 +21,7 @@ func newFilterMapIterator[T any, B any](iter Iterator[T], filterMap func(T) gust
 
 type filterMapIterator[T any, B any] struct {
 	deIterBackground[B]
-	iter Iterator[T]
+	iter innerIterator[T]
 	f    func(T) gust.Option[B]
 }
 
@@ -35,7 +35,7 @@ func (f *filterMapIterator[T, B]) realSizeHint() (uint, gust.Option[uint]) {
 }
 
 func (f *filterMapIterator[T, B]) realNext() gust.Option[B] {
-	return FindMap(f.iter, f.f)
+	return FindMap[T, B](f.iter, f.f)
 }
 
 func (f *filterMapIterator[T, B]) realTryFold(init any, fold func(any, B) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
@@ -59,14 +59,14 @@ func (f *filterMapIterator[T, B]) realFold(init any, fold func(any, B) any) any 
 }
 
 var (
-	_ DeIterator[any]    = (*deFilterMapIterator[any, any])(nil)
-	_ iRealRemaining     = (*deFilterMapIterator[any, any])(nil)
-	_ iRealNextBack[any] = (*deFilterMapIterator[any, any])(nil)
-	_ iRealTryRfold[any] = (*deFilterMapIterator[any, any])(nil)
-	_ iRealRfold[any]    = (*deFilterMapIterator[any, any])(nil)
+	_ innerDeIterator[any] = (*deFilterMapIterator[any, any])(nil)
+	_ iRealRemaining       = (*deFilterMapIterator[any, any])(nil)
+	_ iRealNextBack[any]   = (*deFilterMapIterator[any, any])(nil)
+	_ iRealTryRfold[any]   = (*deFilterMapIterator[any, any])(nil)
+	_ iRealRfold[any]      = (*deFilterMapIterator[any, any])(nil)
 )
 
-func newDeFilterMapIterator[T any, B any](iter DeIterator[T], filterMap func(T) gust.Option[B]) DeIterator[B] {
+func newDeFilterMapIterator[T any, B any](iter innerDeIterator[T], filterMap func(T) gust.Option[B]) innerDeIterator[B] {
 	p := &deFilterMapIterator[T, B]{}
 	p.iter = iter
 	p.f = filterMap
@@ -79,11 +79,11 @@ type deFilterMapIterator[T any, B any] struct {
 }
 
 func (d *deFilterMapIterator[T, B]) realRemaining() uint {
-	return d.iter.(DeIterator[T]).Remaining()
+	return d.iter.(innerDeIterator[T]).Remaining()
 }
 
 func (d *deFilterMapIterator[T, B]) realNextBack() gust.Option[B] {
-	return opt.XAssert[B](d.iter.(DeIterator[T]).TryRfold(nil, func(_ any, x T) gust.AnyCtrlFlow {
+	return opt.XAssert[B](d.iter.(innerDeIterator[T]).TryRfold(nil, func(_ any, x T) gust.AnyCtrlFlow {
 		v := d.f(x)
 		if v.IsSome() {
 			return gust.AnyBreak(v.Unwrap())
@@ -93,7 +93,7 @@ func (d *deFilterMapIterator[T, B]) realNextBack() gust.Option[B] {
 }
 
 func (d *deFilterMapIterator[T, B]) realTryRfold(init any, fold func(any, B) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
-	return d.iter.(DeIterator[T]).TryRfold(init, func(acc any, item T) gust.AnyCtrlFlow {
+	return d.iter.(innerDeIterator[T]).TryRfold(init, func(acc any, item T) gust.AnyCtrlFlow {
 		r := d.f(item)
 		if r.IsSome() {
 			return fold(acc, r.Unwrap())
@@ -103,7 +103,7 @@ func (d *deFilterMapIterator[T, B]) realTryRfold(init any, fold func(any, B) gus
 }
 
 func (d *deFilterMapIterator[T, B]) realRfold(init any, fold func(any, B) any) any {
-	return d.iter.(DeIterator[T]).Rfold(init, func(acc any, item T) any {
+	return d.iter.(innerDeIterator[T]).Rfold(init, func(acc any, item T) any {
 		r := d.f(item)
 		if r.IsSome() {
 			return fold(acc, r.Unwrap())

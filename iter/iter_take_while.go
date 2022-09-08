@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*takeWhileIterator[any])(nil)
-	_ iRealNext[any]    = (*takeWhileIterator[any])(nil)
-	_ iRealFold[any]    = (*takeWhileIterator[any])(nil)
-	_ iRealTryFold[any] = (*takeWhileIterator[any])(nil)
-	_ iRealSizeHint     = (*takeWhileIterator[any])(nil)
+	_ innerIterator[any] = (*takeWhileIterator[any])(nil)
+	_ iRealNext[any]     = (*takeWhileIterator[any])(nil)
+	_ iRealFold[any]     = (*takeWhileIterator[any])(nil)
+	_ iRealTryFold[any]  = (*takeWhileIterator[any])(nil)
+	_ iRealSizeHint      = (*takeWhileIterator[any])(nil)
 )
 
-func newTakeWhileIterator[T any](iter Iterator[T], predicate func(T) bool) Iterator[T] {
+func newTakeWhileIterator[T any](iter innerIterator[T], predicate func(T) bool) innerIterator[T] {
 	p := &takeWhileIterator[T]{iter: iter, predicate: predicate}
 	p.setFacade(p)
 	return p
@@ -20,7 +20,7 @@ func newTakeWhileIterator[T any](iter Iterator[T], predicate func(T) bool) Itera
 
 type takeWhileIterator[T any] struct {
 	iterBackground[T]
-	iter      Iterator[T]
+	iter      innerIterator[T]
 	flag      bool
 	predicate func(T) bool
 }

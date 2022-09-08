@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*mapWhileIterator[any, any])(nil)
-	_ iRealNext[any]    = (*mapWhileIterator[any, any])(nil)
-	_ iRealTryFold[any] = (*mapWhileIterator[any, any])(nil)
-	_ iRealFold[any]    = (*mapWhileIterator[any, any])(nil)
-	_ iRealSizeHint     = (*mapWhileIterator[any, any])(nil)
+	_ innerIterator[any] = (*mapWhileIterator[any, any])(nil)
+	_ iRealNext[any]     = (*mapWhileIterator[any, any])(nil)
+	_ iRealTryFold[any]  = (*mapWhileIterator[any, any])(nil)
+	_ iRealFold[any]     = (*mapWhileIterator[any, any])(nil)
+	_ iRealSizeHint      = (*mapWhileIterator[any, any])(nil)
 )
 
-func newMapWhileIterator[T any, B any](iter Iterator[T], f func(T) gust.Option[B]) Iterator[B] {
+func newMapWhileIterator[T any, B any](iter innerIterator[T], f func(T) gust.Option[B]) innerIterator[B] {
 	p := &mapWhileIterator[T, B]{iter: iter, f: f}
 	p.setFacade(p)
 	return p
@@ -20,7 +20,7 @@ func newMapWhileIterator[T any, B any](iter Iterator[T], f func(T) gust.Option[B
 
 type mapWhileIterator[T any, B any] struct {
 	iterBackground[B]
-	iter Iterator[T]
+	iter innerIterator[T]
 	f    func(T) gust.Option[B]
 }
 

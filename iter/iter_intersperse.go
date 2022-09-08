@@ -4,23 +4,23 @@ import (
 	"github.com/andeya/gust"
 )
 
-func newIntersperseIterator[T any](iter PeekableIterator[T], separator T) Iterator[T] {
+func newIntersperseIterator[T any](iter PeekableIterator[T], separator T) innerIterator[T] {
 	p := &intersperseIterator[T]{iter: iter, separator: func() T { return separator }}
 	p.setFacade(p)
 	return p
 }
 
-func newIntersperseWithIterator[T any](iter PeekableIterator[T], separator func() T) Iterator[T] {
+func newIntersperseWithIterator[T any](iter PeekableIterator[T], separator func() T) innerIterator[T] {
 	p := &intersperseIterator[T]{iter: iter, separator: separator}
 	p.setFacade(p)
 	return p
 }
 
 var (
-	_ Iterator[any]  = (*intersperseIterator[any])(nil)
-	_ iRealFold[any] = (*intersperseIterator[any])(nil)
-	_ iRealNext[any] = (*intersperseIterator[any])(nil)
-	_ iRealSizeHint  = (*intersperseIterator[any])(nil)
+	_ innerIterator[any] = (*intersperseIterator[any])(nil)
+	_ iRealFold[any]     = (*intersperseIterator[any])(nil)
+	_ iRealNext[any]     = (*intersperseIterator[any])(nil)
+	_ iRealSizeHint      = (*intersperseIterator[any])(nil)
 )
 
 // intersperseIterator is an iterator adapter that places a separator between all elements.

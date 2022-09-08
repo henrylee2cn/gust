@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*scanIterator[any, any, any])(nil)
-	_ iRealNext[any]    = (*scanIterator[any, any, any])(nil)
-	_ iRealTryFold[any] = (*scanIterator[any, any, any])(nil)
-	_ iRealFold[any]    = (*scanIterator[any, any, any])(nil)
-	_ iRealSizeHint     = (*scanIterator[any, any, any])(nil)
+	_ innerIterator[any] = (*scanIterator[any, any, any])(nil)
+	_ iRealNext[any]     = (*scanIterator[any, any, any])(nil)
+	_ iRealTryFold[any]  = (*scanIterator[any, any, any])(nil)
+	_ iRealFold[any]     = (*scanIterator[any, any, any])(nil)
+	_ iRealSizeHint      = (*scanIterator[any, any, any])(nil)
 )
 
-func newScanIterator[T any, St any, B any](iter Iterator[T], initialState St, f func(*St, T) gust.Option[B]) Iterator[B] {
+func newScanIterator[T any, St any, B any](iter innerIterator[T], initialState St, f func(*St, T) gust.Option[B]) innerIterator[B] {
 	p := &scanIterator[T, St, B]{iter: iter, f: f, state: initialState}
 	p.setFacade(p)
 	return p
@@ -20,7 +20,7 @@ func newScanIterator[T any, St any, B any](iter Iterator[T], initialState St, f 
 
 type scanIterator[T any, St any, B any] struct {
 	iterBackground[B]
-	iter  Iterator[T]
+	iter  innerIterator[T]
 	state St
 	f     func(*St, T) gust.Option[B]
 }

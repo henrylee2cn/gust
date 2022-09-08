@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	_ Iterator[any]       = (*skipIterator[any])(nil)
+	_ innerIterator[any]  = (*skipIterator[any])(nil)
 	_ iRealNext[any]      = (*skipIterator[any])(nil)
 	_ iRealNth[any]       = (*skipIterator[any])(nil)
 	_ iRealCount          = (*skipIterator[any])(nil)
@@ -16,7 +16,7 @@ var (
 	_ iRealAdvanceBy[any] = (*skipIterator[any])(nil)
 )
 
-func newSkipIterator[T any](iter Iterator[T], n uint) Iterator[T] {
+func newSkipIterator[T any](iter innerIterator[T], n uint) innerIterator[T] {
 	p := &skipIterator[T]{iter: iter, n: n}
 	p.setFacade(p)
 	return p
@@ -25,7 +25,7 @@ func newSkipIterator[T any](iter Iterator[T], n uint) Iterator[T] {
 type (
 	skipIterator[T any] struct {
 		deIterBackground[T]
-		iter Iterator[T]
+		iter innerIterator[T]
 		n    uint
 	}
 )
@@ -142,7 +142,7 @@ func (f *skipIterator[T]) realAdvanceBy(n uint) gust.Errable[uint] {
 }
 
 var (
-	_ DeIterator[any]         = (*deSkipIterator[any])(nil)
+	_ innerDeIterator[any]    = (*deSkipIterator[any])(nil)
 	_ iRealNext[any]          = (*deSkipIterator[any])(nil)
 	_ iRealSizeHint           = (*deSkipIterator[any])(nil)
 	_ iRealNth[any]           = (*deSkipIterator[any])(nil)
@@ -159,7 +159,7 @@ var (
 	_ iRealRemaining          = (*deSkipIterator[any])(nil)
 )
 
-func newDeSkipIterator[T any](iter DeIterator[T], n uint) DeIterator[T] {
+func newDeSkipIterator[T any](iter innerDeIterator[T], n uint) innerDeIterator[T] {
 	p := &deSkipIterator[T]{}
 	p.iter = iter
 	p.n = n
@@ -172,7 +172,7 @@ type deSkipIterator[T any] struct {
 }
 
 func (d *deSkipIterator[T]) realNextBack() gust.Option[T] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	if sizeDeIter.Remaining() > 0 {
 		return sizeDeIter.NextBack()
 	}
@@ -180,7 +180,7 @@ func (d *deSkipIterator[T]) realNextBack() gust.Option[T] {
 }
 
 func (d *deSkipIterator[T]) realNthBack(n uint) gust.Option[T] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var remaining = sizeDeIter.Remaining()
 	if n < remaining {
 		return sizeDeIter.NthBack(n)
@@ -193,7 +193,7 @@ func (d *deSkipIterator[T]) realNthBack(n uint) gust.Option[T] {
 }
 
 func (d *deSkipIterator[T]) realTryRfold(init any, fold func(any, T) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var n = sizeDeIter.Remaining()
 	if n == 0 {
 		return gust.AnyContinue(init)
@@ -213,14 +213,14 @@ func (d *deSkipIterator[T]) realTryRfold(init any, fold func(any, T) gust.AnyCtr
 }
 
 func (d *deSkipIterator[T]) realRfold(init any, fold func(any, T) any) any {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	return sizeDeIter.Rfold(init, func(acc any, x T) any {
 		return fold(acc, x)
 	})
 }
 
 func (d *deSkipIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var min = sizeDeIter.Remaining()
 	if n < min {
 		min = n
@@ -236,5 +236,5 @@ func (d *deSkipIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
 }
 
 func (d *deSkipIterator[T]) realRemaining() uint {
-	return d.iter.(DeIterator[T]).Remaining()
+	return d.iter.(innerDeIterator[T]).Remaining()
 }

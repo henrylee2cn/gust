@@ -5,14 +5,14 @@ import (
 )
 
 var (
-	_ Iterator[any]     = (*mapIterator[any, any])(nil)
-	_ iRealNext[any]    = (*mapIterator[any, any])(nil)
-	_ iRealTryFold[any] = (*mapIterator[any, any])(nil)
-	_ iRealFold[any]    = (*mapIterator[any, any])(nil)
-	_ iRealSizeHint     = (*mapIterator[any, any])(nil)
+	_ innerIterator[any] = (*mapIterator[any, any])(nil)
+	_ iRealNext[any]     = (*mapIterator[any, any])(nil)
+	_ iRealTryFold[any]  = (*mapIterator[any, any])(nil)
+	_ iRealFold[any]     = (*mapIterator[any, any])(nil)
+	_ iRealSizeHint      = (*mapIterator[any, any])(nil)
 )
 
-func newMapIterator[T any, B any](iter Iterator[T], f func(T) B) Iterator[B] {
+func newMapIterator[T any, B any](iter innerIterator[T], f func(T) B) innerIterator[B] {
 	p := &mapIterator[T, B]{iter: iter, f: f}
 	p.setFacade(p)
 	return p
@@ -20,7 +20,7 @@ func newMapIterator[T any, B any](iter Iterator[T], f func(T) B) Iterator[B] {
 
 type mapIterator[T any, B any] struct {
 	deIterBackground[B]
-	iter Iterator[T]
+	iter innerIterator[T]
 	f    func(T) B
 }
 
@@ -49,14 +49,14 @@ func (s *mapIterator[T, B]) realNext() gust.Option[B] {
 }
 
 var (
-	_ DeIterator[any]    = (*deMapIterator[any, any])(nil)
-	_ iRealRemaining     = (*deMapIterator[any, any])(nil)
-	_ iRealNextBack[any] = (*deMapIterator[any, any])(nil)
-	_ iRealTryRfold[any] = (*deMapIterator[any, any])(nil)
-	_ iRealRfold[any]    = (*deMapIterator[any, any])(nil)
+	_ innerDeIterator[any] = (*deMapIterator[any, any])(nil)
+	_ iRealRemaining       = (*deMapIterator[any, any])(nil)
+	_ iRealNextBack[any]   = (*deMapIterator[any, any])(nil)
+	_ iRealTryRfold[any]   = (*deMapIterator[any, any])(nil)
+	_ iRealRfold[any]      = (*deMapIterator[any, any])(nil)
 )
 
-func newDeMapIterator[T any, B any](iter DeIterator[T], f func(T) B) DeIterator[B] {
+func newDeMapIterator[T any, B any](iter innerDeIterator[T], f func(T) B) innerDeIterator[B] {
 	p := &deMapIterator[T, B]{}
 	p.iter = iter
 	p.f = f
@@ -69,11 +69,11 @@ type deMapIterator[T any, B any] struct {
 }
 
 func (d *deMapIterator[T, B]) realRemaining() uint {
-	return d.iter.(DeIterator[T]).Remaining()
+	return d.iter.(innerDeIterator[T]).Remaining()
 }
 
 func (d *deMapIterator[T, B]) realNextBack() gust.Option[B] {
-	r := d.iter.(DeIterator[T]).NextBack()
+	r := d.iter.(innerDeIterator[T]).NextBack()
 	if r.IsSome() {
 		return gust.Some(d.f(r.Unwrap()))
 	}
@@ -81,9 +81,9 @@ func (d *deMapIterator[T, B]) realNextBack() gust.Option[B] {
 }
 
 func (d *deMapIterator[T, B]) realRfold(init any, g func(any, B) any) any {
-	return Rfold[T, any](d.iter.(DeIterator[T]), init, func(acc any, elt T) any { return g(acc, d.f(elt)) })
+	return Rfold[T, any](d.iter.(innerDeIterator[T]), init, func(acc any, elt T) any { return g(acc, d.f(elt)) })
 }
 
 func (d *deMapIterator[T, B]) realTryRfold(init any, g func(any, B) gust.AnyCtrlFlow) gust.AnyCtrlFlow {
-	return TryRfold[T, any](d.iter.(DeIterator[T]), init, func(acc any, elt T) gust.AnyCtrlFlow { return g(acc, d.f(elt)) })
+	return TryRfold[T, any](d.iter.(innerDeIterator[T]), init, func(acc any, elt T) gust.AnyCtrlFlow { return g(acc, d.f(elt)) })
 }

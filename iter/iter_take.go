@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	_ Iterator[any]       = (*takeIterator[any])(nil)
+	_ innerIterator[any]  = (*takeIterator[any])(nil)
 	_ iRealNext[any]      = (*takeIterator[any])(nil)
 	_ iRealNth[any]       = (*takeIterator[any])(nil)
 	_ iRealSizeHint       = (*takeIterator[any])(nil)
@@ -14,7 +14,7 @@ var (
 	_ iRealAdvanceBy[any] = (*takeIterator[any])(nil)
 )
 
-func newTakeIterator[T any](iter Iterator[T], n uint) Iterator[T] {
+func newTakeIterator[T any](iter innerIterator[T], n uint) innerIterator[T] {
 	p := &takeIterator[T]{iter: iter, n: n}
 	p.setFacade(p)
 	return p
@@ -23,7 +23,7 @@ func newTakeIterator[T any](iter Iterator[T], n uint) Iterator[T] {
 type (
 	takeIterator[T any] struct {
 		deIterBackground[T]
-		iter Iterator[T]
+		iter innerIterator[T]
 		n    uint
 	}
 )
@@ -108,7 +108,7 @@ func (f *takeIterator[T]) realAdvanceBy(n uint) gust.Errable[uint] {
 }
 
 var (
-	_ DeIterator[any]         = (*deTakeIterator[any])(nil)
+	_ innerDeIterator[any]    = (*deTakeIterator[any])(nil)
 	_ iRealNext[any]          = (*deTakeIterator[any])(nil)
 	_ iRealSizeHint           = (*deTakeIterator[any])(nil)
 	_ iRealNth[any]           = (*deTakeIterator[any])(nil)
@@ -123,7 +123,7 @@ var (
 	_ iRealRemaining          = (*deTakeIterator[any])(nil)
 )
 
-func newDeTakeIterator[T any](iter DeIterator[T], n uint) DeIterator[T] {
+func newDeTakeIterator[T any](iter innerDeIterator[T], n uint) innerDeIterator[T] {
 	p := &deTakeIterator[T]{}
 	p.iter = iter
 	p.n = n
@@ -141,12 +141,12 @@ func (d *deTakeIterator[T]) realNextBack() gust.Option[T] {
 	}
 	var n = d.n
 	d.n -= 1
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	return sizeDeIter.NthBack(saturatingSub(sizeDeIter.Remaining(), n))
 }
 
 func (d *deTakeIterator[T]) realNthBack(n uint) gust.Option[T] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var remaining = sizeDeIter.Remaining()
 	if d.n > n {
 		var m = saturatingSub(remaining, d.n) + n
@@ -163,7 +163,7 @@ func (d *deTakeIterator[T]) realTryRfold(init any, fold func(any, T) gust.AnyCtr
 	if d.n == 0 {
 		return gust.AnyContinue(init)
 	}
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var remaining = sizeDeIter.Remaining()
 	if remaining > d.n && sizeDeIter.NthBack(remaining-d.n-1).IsNone() {
 		return gust.AnyContinue(init)
@@ -175,7 +175,7 @@ func (d *deTakeIterator[T]) realRfold(init any, fold func(any, T) any) any {
 	if d.n == 0 {
 		return init
 	}
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	var remaining = sizeDeIter.Remaining()
 	if remaining > d.n && sizeDeIter.NthBack(remaining-d.n-1).IsNone() {
 		return init
@@ -184,7 +184,7 @@ func (d *deTakeIterator[T]) realRfold(init any, fold func(any, T) any) any {
 }
 
 func (d *deTakeIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
-	var sizeDeIter = d.iter.(DeIterator[T])
+	var sizeDeIter = d.iter.(innerDeIterator[T])
 	// The amount by which the inner iterator needs to be shortened for it to be
 	// at most as long as the take() amount.
 	var trimInner = saturatingSub(sizeDeIter.Remaining(), d.n)
@@ -207,5 +207,5 @@ func (d *deTakeIterator[T]) realAdvanceBackBy(n uint) gust.Errable[uint] {
 }
 
 func (d *deTakeIterator[T]) realRemaining() uint {
-	return d.iter.(DeIterator[T]).Remaining()
+	return d.iter.(innerDeIterator[T]).Remaining()
 }
